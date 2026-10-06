@@ -59,6 +59,7 @@ class VocabVM : ViewModel() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable fun AppTopBar(vm: VocabVM) { TopAppBar(title={Text("מילים בכיף",fontWeight=FontWeight.Bold)}, actions={ IconButton(onClick={vm.dark=!vm.dark}){Icon(if(vm.dark) Icons.Default.LightMode else Icons.Default.DarkMode,"מצב תצוגה")} }) }
 
 @Composable fun HomeScreen(vm: VocabVM) {
