@@ -53,7 +53,7 @@ class VocabVM : ViewModel() {
     MaterialTheme(colorScheme = if(vm.dark) darkColorScheme() else lightColorScheme(), typography = Typography()) {
         Surface(Modifier.fillMaxSize()) { Column(Modifier.fillMaxSize()) {
             AppTopBar(vm)
-            Box(Modifier.weight(1f)) { when(vm.screen) { "learn" -> LearnScreen(vm); "quiz" -> QuizScreen(vm); "search" -> SearchScreen(vm); "favorites" -> FavoritesScreen(vm); "stats" -> StatsScreen(vm); else -> HomeScreen(vm) } } }
+            Box(Modifier.weight(1f)) { when(vm.screen) { "learn" -> LearnScreen(vm); "quiz" -> QuizScreen(vm); "search" -> SearchScreen(vm); "favorites" -> FavoritesScreen(vm); "stats" -> StatsScreen(vm); else -> HomeScreen(vm) } } 
             BottomBar(vm)
         } }
     }
