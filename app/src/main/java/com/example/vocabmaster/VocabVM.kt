@@ -71,9 +71,9 @@ class VocabVM : ViewModel() {
 
     // ---------- הגדרות ----------
     fun setTheme(v: Int) { themeMode = v; store.themeMode = v }
-    fun setGoal(v: Int) { goal = v; store.dailyGoal = v; bump() }
-    fun setRate(v: Float) { rate = v; store.speechRate = v }
-    fun setAutoSpeak(v: Boolean) { autoSpeak = v; store.autoSpeak = v }
+    fun updateGoal(v: Int) { goal = v; store.dailyGoal = v; bump() }
+    fun updateRate(v: Float) { rate = v; store.speechRate = v }
+    fun updateAutoSpeak(v: Boolean) { autoSpeak = v; store.autoSpeak = v }
     fun toggleDirection() { heFirst = !heFirst; store.heFirst = heFirst; flipped = false }
     fun reset() { store.resetProgress(); bump() }
 

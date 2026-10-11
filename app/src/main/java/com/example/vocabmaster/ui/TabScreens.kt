@@ -144,15 +144,15 @@ fun SettingsScreen(vm: VocabVM) {
             }
             SettingsCard("יעד יומי (תרגולים)") {
                 val goals = listOf(10, 20, 30, 50)
-                ChipRow(goals.map { "$it" }, goals.indexOf(vm.goal)) { vm.setGoal(goals[it]) }
+                ChipRow(goals.map { "$it" }, goals.indexOf(vm.goal)) { vm.updateGoal(goals[it]) }
             }
             SettingsCard("קול") {
                 val rates = listOf(0.7f, 0.9f, 1.1f)
                 Text("מהירות הקראה", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
-                ChipRow(listOf("איטית", "רגילה", "מהירה"), rates.indexOfFirst { it >= vm.rate - 0.01f }.coerceAtLeast(0)) { vm.setRate(rates[it]) }
+                ChipRow(listOf("איטית", "רגילה", "מהירה"), rates.indexOfFirst { it >= vm.rate - 0.01f }.coerceAtLeast(0)) { vm.updateRate(rates[it]) }
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Text("השמעה אוטומטית בכרטיסיות", Modifier.weight(1f))
-                    Switch(checked = vm.autoSpeak, onCheckedChange = { vm.setAutoSpeak(it) })
+                    Switch(checked = vm.autoSpeak, onCheckedChange = { vm.updateAutoSpeak(it) })
                 }
             }
             SettingsCard("כיוון כרטיסיות") {
