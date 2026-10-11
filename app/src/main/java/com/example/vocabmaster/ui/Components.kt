@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.vocabmaster.Screen
 import com.example.vocabmaster.VocabVM
 import com.example.vocabmaster.data.Word
@@ -77,10 +78,16 @@ fun WordRow(w: Word, vm: VocabVM, speaker: Speaker) {
     val fav = vm.store.isFavorite(w.en)
     Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), colors = cardColors(), elevation = cardElevation()) {
         Row(Modifier.padding(start = 14.dp, top = 6.dp, bottom = 6.dp, end = 4.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            LevelDot(vm.store.level(w.en))
+            Box(
+                Modifier.size(42.dp).clip(CircleShape).background(androidx.compose.ui.graphics.Brush.linearGradient(catGradient(w.category))),
+                contentAlignment = Alignment.Center
+            ) { Text(com.example.vocabmaster.data.WordRepository.emoji(w.category), fontSize = 20.sp) }
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text(w.en, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(w.en, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                    Spacer(Modifier.width(8.dp)); LevelDot(vm.store.level(w.en))
+                }
                 Text(w.he, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             IconButton(onClick = { speaker.speak(w.en, vm.rate) }) { Icon(Icons.Default.VolumeUp, "השמע", tint = MaterialTheme.colorScheme.primary) }
@@ -101,7 +108,10 @@ fun BottomBar(vm: VocabVM) {
     )
     NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainerLow) {
         items.forEach { (id, label, icon) ->
-            NavigationBarItem(selected = vm.screen == id, onClick = { vm.screen = id }, icon = { Icon(icon, label) }, label = { Text(label) })
+            NavigationBarItem(
+                selected = vm.screen == id, onClick = { vm.screen = id }, icon = { Icon(icon, label) }, label = { Text(label) },
+                colors = NavigationBarItemDefaults.colors(indicatorColor = MaterialTheme.colorScheme.primaryContainer)
+            )
         }
     }
 }

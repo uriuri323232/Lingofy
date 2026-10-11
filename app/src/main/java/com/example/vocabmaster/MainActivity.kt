@@ -6,6 +6,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -55,14 +61,20 @@ fun LingofyApp(vm: VocabVM = viewModel()) {
             Surface(Modifier.fillMaxSize()) {
                 Column(Modifier.fillMaxSize()) {
                     Box(Modifier.weight(1f)) {
-                        when (vm.screen) {
-                            Screen.HOME -> HomeScreen(vm)
-                            Screen.LEARN -> LearnScreen(vm, speaker)
-                            Screen.QUIZ -> QuizScreen(vm, speaker)
-                            Screen.SEARCH -> SearchScreen(vm, speaker)
-                            Screen.FAVORITES -> FavoritesScreen(vm, speaker)
-                            Screen.STATS -> StatsScreen(vm)
-                            Screen.SETTINGS -> SettingsScreen(vm)
+                        AnimatedContent(
+                            targetState = vm.screen,
+                            transitionSpec = { (fadeIn(tween(240)) + slideInVertically(tween(240)) { it / 24 }) togetherWith fadeOut(tween(140)) },
+                            label = "screen"
+                        ) { s ->
+                            when (s) {
+                                Screen.HOME -> HomeScreen(vm, speaker)
+                                Screen.LEARN -> LearnScreen(vm, speaker)
+                                Screen.QUIZ -> QuizScreen(vm, speaker)
+                                Screen.SEARCH -> SearchScreen(vm, speaker)
+                                Screen.FAVORITES -> FavoritesScreen(vm, speaker)
+                                Screen.STATS -> StatsScreen(vm)
+                                Screen.SETTINGS -> SettingsScreen(vm)
+                            }
                         }
                     }
                     if (vm.screen in listOf(Screen.HOME, Screen.SEARCH, Screen.FAVORITES, Screen.STATS)) BottomBar(vm)

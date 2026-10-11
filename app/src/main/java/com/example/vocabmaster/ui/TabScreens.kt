@@ -1,5 +1,7 @@
 package com.example.vocabmaster.ui
 
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -16,6 +18,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.vocabmaster.*
@@ -82,24 +90,95 @@ fun StatsScreen(vm: VocabVM) {
     val attempts = s.attempts(); val ok = s.successes()
     val acc = if (attempts == 0) 0 else ok * 100 / attempts
     val weak = s.weakWords(words).take(8)
+    val learned = s.learnedCount(words)
+    val week = s.lastDays(7)
+    val counts = s.levelCounts(words)
+    val letters = listOf("ב", "ג", "ד", "ה", "ו", "ש", "א")
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 16.dp)) {
         TabHeader("ההתקדמות שלי")
-        Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            // כרטיס ראשי
+            Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(28.dp)).background(Brush.linearGradient(listOf(Indigo, Violet)))) {
+                Row(Modifier.fillMaxWidth().padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Box(contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(
+                            progress = { learned.toFloat() / words.size }, modifier = Modifier.size(96.dp), strokeWidth = 10.dp,
+                            color = Amber, trackColor = Color.White.copy(alpha = 0.25f)
+                        )
+                        Text("${learned * 100 / words.size}%", color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp)
+                    }
+                    Spacer(Modifier.width(18.dp))
+                    Column {
+                        Text("$learned מילים נלמדו", color = Color.White, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp)
+                        Text("מתוך ${words.size} במאגר", color = Color.White.copy(alpha = 0.85f))
+                        Spacer(Modifier.height(6.dp))
+                        Text("🔥 רצף ${s.streak()} · שיא ${s.bestStreak()}", color = Color.White, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                StatCard("מילים שנלמדו", "${s.learnedCount(words)}/${words.size}", Modifier.weight(1f), Success)
                 StatCard("דיוק בחידונים", "$acc%", Modifier.weight(1f))
+                StatCard("תרגולים היום", "${s.todayCount()}/${vm.goal}", Modifier.weight(1f), Success)
+                StatCard("סה״כ תרגולים", "${s.reviews()}", Modifier.weight(1f), Amber)
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                StatCard("רצף נוכחי 🔥", "${s.streak()}", Modifier.weight(1f), Amber)
-                StatCard("רצף שיא", "${s.bestStreak()}", Modifier.weight(1f), Amber)
+
+            // 7 ימים אחרונים
+            Text("7 ימים אחרונים", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 4.dp))
+            Card(shape = RoundedCornerShape(24.dp), colors = cardColors(), elevation = cardElevation()) {
+                val maxV = maxOf(vm.goal, week.maxOf { it.second }, 1)
+                Row(Modifier.fillMaxWidth().padding(16.dp).height(150.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
+                    week.forEach { (d, c) ->
+                        val h = (100f * c / maxV).coerceAtLeast(4f)
+                        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Bottom) {
+                            Text("$c", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Spacer(Modifier.height(4.dp))
+                            Box(
+                                Modifier.width(28.dp).height(h.dp).clip(RoundedCornerShape(10.dp))
+                                    .background(if (c >= vm.goal) Success else if (c > 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant)
+                            )
+                            Spacer(Modifier.height(6.dp))
+                            Text(letters[d.dayOfWeek.value - 1], style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                StatCard("תרגולים היום", "${s.todayCount()}/${vm.goal}", Modifier.weight(1f))
-                StatCard("סה״כ תרגולים", "${s.reviews()}", Modifier.weight(1f))
+
+            // רמות שליטה
+            Text("רמת שליטה", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 4.dp))
+            Card(shape = RoundedCornerShape(24.dp), colors = cardColors(), elevation = cardElevation()) {
+                val colors = listOf(Color(0xFF9CA3AF), Danger, Amber, Success)
+                val names = listOf("חדשות", "קשות", "בלמידה", "נלמדו")
+                Row(Modifier.fillMaxWidth().padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Canvas(Modifier.size(120.dp)) {
+                        val total = counts.sum().coerceAtLeast(1)
+                        val stroke = 22.dp.toPx()
+                        var start = -90f
+                        counts.forEachIndexed { i, c ->
+                            val sweep = 360f * c / total
+                            if (c > 0) drawArc(
+                                color = colors[i], startAngle = start, sweepAngle = sweep, useCenter = false,
+                                topLeft = Offset(stroke / 2, stroke / 2), size = Size(size.width - stroke, size.height - stroke),
+                                style = Stroke(width = stroke)
+                            )
+                            start += sweep
+                        }
+                    }
+                    Spacer(Modifier.width(24.dp))
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        names.forEachIndexed { i, n ->
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(Modifier.size(12.dp).clip(CircleShape).background(colors[i]))
+                                Spacer(Modifier.width(10.dp))
+                                Text("$n · ${counts[i]}")
+                            }
+                        }
+                    }
+                }
             }
-            Text("לפי קטגוריה", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
-            Card(shape = RoundedCornerShape(20.dp), colors = cardColors(), elevation = cardElevation()) {
+
+            Text("לפי קטגוריה", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 4.dp))
+            Card(shape = RoundedCornerShape(24.dp), colors = cardColors(), elevation = cardElevation()) {
                 Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     vm.repo.categories.forEach { c ->
                         val l = vm.repo.inCategory(c); val n = s.learnedCount(l)
@@ -108,23 +187,23 @@ fun StatsScreen(vm: VocabVM) {
                                 Text("${WordRepository.emoji(c)} $c"); Text("$n/${l.size}", color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                             LinearProgressIndicator(
-                                progress = { n.toFloat() / l.size }, modifier = Modifier.fillMaxWidth().height(6.dp).clip(CircleShape),
-                                color = Success, trackColor = MaterialTheme.colorScheme.outlineVariant
+                                progress = { n.toFloat() / l.size }, modifier = Modifier.fillMaxWidth().height(8.dp).clip(CircleShape),
+                                color = catGradient(c)[0], trackColor = MaterialTheme.colorScheme.outlineVariant
                             )
                         }
                     }
                 }
             }
             if (weak.isNotEmpty()) {
-                Text("המילים הקשות שלי", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
-                Card(shape = RoundedCornerShape(20.dp), colors = cardColors(), elevation = cardElevation()) {
+                Text("המילים הקשות שלי", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 4.dp))
+                Card(shape = RoundedCornerShape(24.dp), colors = cardColors(), elevation = cardElevation()) {
                     Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         weak.forEach { w ->
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                 Text(w.en, fontWeight = FontWeight.Bold); Text(w.he, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
-                        Button(onClick = { vm.startWeak() }, Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp)) { Text("תרגל אותן עכשיו") }
+                        Button(onClick = { vm.startWeak() }, Modifier.fillMaxWidth().height(50.dp), shape = RoundedCornerShape(16.dp)) { Text("תרגל אותן עכשיו") }
                     }
                 }
             }
@@ -164,7 +243,7 @@ fun SettingsScreen(vm: VocabVM) {
                 }
                 Text("הכול נשמר רק במכשיר ועובד בלי אינטרנט.", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
             }
-            Text("Lingofy · גרסה 2.0", Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+            Text("Lingofy · גרסה 2.1", Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
         }
     }
     if (confirm) AlertDialog(

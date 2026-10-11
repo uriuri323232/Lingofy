@@ -3,6 +3,7 @@ package com.example.vocabmaster.ui
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.sp
 
 val Indigo = Color(0xFF4F46E5)
 val Violet = Color(0xFF7C3AED)
@@ -29,5 +30,31 @@ private val Dark = darkColorScheme(
 
 @Composable
 fun LingofyTheme(dark: Boolean, content: @Composable () -> Unit) {
-    MaterialTheme(colorScheme = if (dark) Dark else Light, content = content)
+    MaterialTheme(colorScheme = if (dark) Dark else Light, typography = AppTypography, content = content)
+}
+
+private val BaseTypography = Typography()
+val AppTypography = BaseTypography.copy(
+    headlineMedium = BaseTypography.headlineMedium.copy(letterSpacing = 0.sp),
+    headlineSmall = BaseTypography.headlineSmall.copy(letterSpacing = 0.sp),
+    titleLarge = BaseTypography.titleLarge.copy(letterSpacing = 0.sp),
+    titleMedium = BaseTypography.titleMedium.copy(letterSpacing = 0.sp),
+    labelLarge = BaseTypography.labelLarge.copy(letterSpacing = 0.sp)
+)
+
+fun catGradient(c: String): List<Color> = when (c) {
+    "בסיסי" -> listOf(Color(0xFF4F46E5), Color(0xFF7C3AED))
+    "משפחה" -> listOf(Color(0xFFEC4899), Color(0xFFF43F5E))
+    "אוכל" -> listOf(Color(0xFFFB923C), Color(0xFFEF4444))
+    "בית" -> listOf(Color(0xFF14B8A6), Color(0xFF0EA5E9))
+    "גוף" -> listOf(Color(0xFFF43F5E), Color(0xFFFB7185))
+    "זמן" -> listOf(Color(0xFF6366F1), Color(0xFF3B82F6))
+    "צבעים" -> listOf(Color(0xFFEC4899), Color(0xFF8B5CF6))
+    "נסיעות" -> listOf(Color(0xFF0EA5E9), Color(0xFF2563EB))
+    "טבע" -> listOf(Color(0xFF22C55E), Color(0xFF059669))
+    "טכנולוגיה" -> listOf(Color(0xFF64748B), Color(0xFF334155))
+    "עבודה" -> listOf(Color(0xFFD97706), Color(0xFF92400E))
+    "תארים" -> listOf(Color(0xFF8B5CF6), Color(0xFFD946EF))
+    "מתקדמים" -> listOf(Color(0xFF0D9488), Color(0xFF115E59))
+    else -> listOf(Color(0xFF4F46E5), Color(0xFF7C3AED))
 }

@@ -63,6 +63,10 @@ class ProgressStore(context: Context) {
             .putInt("day_${today()}", todayCount() + 1).putInt("reviews", reviews() + 1).apply()
     }
 
+    fun lastDays(n: Int): List<Pair<LocalDate, Int>> =
+        (n - 1 downTo 0).map { val d = LocalDate.now().minusDays(it.toLong()); d to p.getInt("day_$d", 0) }
+    fun levelCounts(words: List<Word>): IntArray { val c = IntArray(4); words.forEach { c[level(it.en)]++ }; return c }
+
     // ---- הגדרות ----
     var themeMode: Int
         get() = p.getInt("theme", 0)

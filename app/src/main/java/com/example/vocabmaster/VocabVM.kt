@@ -55,6 +55,8 @@ class VocabVM : ViewModel() {
     var pickedEn by mutableStateOf<String?>(null)
     var lastCorrect by mutableStateOf(false)
     var typed by mutableStateOf("")
+    var combo by mutableIntStateOf(0)
+    var bestCombo by mutableIntStateOf(0)
 
     fun init(context: Context) {
         if (inited) return
@@ -112,7 +114,7 @@ class VocabVM : ViewModel() {
             for (c in same + other) { if (d.size == 3) break; if (d.none { it.heMain == c.heMain }) d += c }
             Question(w, (d + w).shuffled())
         }
-        qIndex = 0; qScore = 0; answered = false; pickedEn = null; typed = ""
+        qIndex = 0; qScore = 0; combo = 0; bestCombo = 0; answered = false; pickedEn = null; typed = ""
     }
     fun answerChoice(option: Word) {
         if (answered) return
@@ -129,7 +131,7 @@ class VocabVM : ViewModel() {
     }
     private fun finishAnswer(w: Word, correct: Boolean) {
         answered = true; lastCorrect = correct
-        if (correct) qScore++
+        if (correct) { qScore++; combo++; if (combo > bestCombo) bestCombo = combo } else combo = 0
         store.mark(w.en, correct); store.recordQuiz(correct); store.touch(); bump()
     }
     fun nextQuestion() { qIndex++; answered = false; pickedEn = null; typed = "" }
