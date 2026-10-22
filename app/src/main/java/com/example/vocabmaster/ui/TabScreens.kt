@@ -48,7 +48,7 @@ fun SearchScreen(vm: VocabVM, speaker: Speaker) {
             trailingIcon = { if (vm.query.isNotEmpty()) IconButton(onClick = { vm.query = "" }) { Icon(Icons.Default.Close, "נקה") } }
         )
         LazyRow(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(listOf(WordRepository.ALL) + vm.repo.categories) { c ->
+            items(listOf(WordRepository.ALL) + vm.repo.categories, key = { it }) { c ->
                 FilterChip(selected = cat == c, onClick = { cat = c }, label = { Text("${WordRepository.emoji(c)} $c") })
             }
         }

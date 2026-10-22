@@ -103,7 +103,7 @@ fun HomeScreen(vm: VocabVM, speaker: Speaker) {
         item { Text("קטגוריות", Modifier.padding(horizontal = 20.dp), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) }
         item {
             LazyRow(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(listOf(WordRepository.ALL) + vm.repo.categories) { c ->
+                items(listOf(WordRepository.ALL) + vm.repo.categories, key = { it }) { c ->
                     val list = vm.repo.inCategory(c)
                     CategoryTile(c, list.size, vm.store.learnedCount(list), vm.category == c) { vm.category = c }
                 }
