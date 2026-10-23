@@ -208,7 +208,7 @@ private fun StartCard(vm: VocabVM) {
             }
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Button(
-                    onClick = { vm.startLearn(list, vm.scopeTitle()) }, shape = RoundedCornerShape(16.dp), contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+                    onClick = { vm.startLearn(vm.pool(), vm.scopeTitle()) }, shape = RoundedCornerShape(16.dp), contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color(0xFF312E81))
                 ) { Icon(Icons.Default.Style, null); Spacer(Modifier.width(8.dp)); Text("לימוד", fontWeight = FontWeight.Bold) }
                 OutlinedButton(
@@ -390,7 +390,7 @@ private fun LearnDone(vm: VocabVM) {
             StatCard("לחיזוק", "${vm.learnAgain}", Modifier.width(120.dp), Danger)
         }
         Spacer(Modifier.height(28.dp))
-        Button(onClick = { vm.startLearn(vm.scope(), vm.scopeTitle()) }, Modifier.fillMaxWidth().height(54.dp), shape = RoundedCornerShape(18.dp)) { Text("סבב נוסף", fontWeight = FontWeight.Bold) }
+        Button(onClick = { vm.startLearn(vm.pool(), vm.scopeTitle()) }, Modifier.fillMaxWidth().height(54.dp), shape = RoundedCornerShape(18.dp)) { Text("סבב נוסף", fontWeight = FontWeight.Bold) }
         Spacer(Modifier.height(10.dp))
         OutlinedButton(onClick = { vm.screen = Screen.HOME }, Modifier.fillMaxWidth().height(54.dp), shape = RoundedCornerShape(18.dp)) { Text("חזרה לבית") }
     }
@@ -415,14 +415,23 @@ private val modeColors = mapOf(
     QuizMode.EN_HE to listOf(Color(0xFF4F46E5), Color(0xFF7C3AED)),
     QuizMode.HE_EN to listOf(Color(0xFF0EA5E9), Color(0xFF2563EB)),
     QuizMode.LISTEN to listOf(Color(0xFFEC4899), Color(0xFFF43F5E)),
-    QuizMode.TYPE to listOf(Color(0xFFF59E0B), Color(0xFFEF4444))
+    QuizMode.TYPE to listOf(Color(0xFFF59E0B), Color(0xFFEF4444)),
+    QuizMode.TF to listOf(Color(0xFF10B981), Color(0xFF0D9488)),
+    QuizMode.MIX to listOf(Color(0xFF8B5CF6), Color(0xFFEC4899))
 )
 
 @Composable
 private fun ModePicker(vm: VocabVM) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Text("בחר סוג חידון", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-        Text("${WordRepository.emoji(vm.category)} ${vm.scopeTitle()} · 10 שאלות בכל סבב", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("${WordRepository.emoji(vm.category)} ${vm.scopeTitle()} · ${vm.quizLen} שאלות בכל סבב", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        val weakN = vm.store.weakWords(vm.repo.words).size
+        val favN = vm.store.favorites(vm.repo.words).size
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilterChip(selected = vm.quizSource == 0, onClick = { vm.quizSource = 0 }, label = { Text("הקטגוריה") })
+            FilterChip(selected = vm.quizSource == 1, enabled = weakN >= 4, onClick = { vm.quizSource = 1 }, label = { Text("קשות ($weakN)") })
+            FilterChip(selected = vm.quizSource == 2, enabled = favN >= 4, onClick = { vm.quizSource = 2 }, label = { Text("מועדפים ($favN)") })
+        }
         QuizMode.values().forEach { m ->
             Box(
                 Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp))
@@ -468,7 +477,8 @@ private fun OptionButton(text: String, state: Int, onClick: () -> Unit) {
 }
 
 @Composable
-private fun QuizQuestion(vm: VocabVM, speaker: Speaker, mode: QuizMode, q: Question) {
+private fun QuizQuestion(vm: VocabVM, speaker: Speaker, quizMode: QuizMode, q: Question) {
+    val mode = q.mode
     val w = q.word
     val haptic = LocalHapticFeedback.current
     LaunchedEffect(w.en, mode) { if (mode == QuizMode.LISTEN) speaker.speak(w.en, vm.rate) }
@@ -511,6 +521,13 @@ private fun QuizQuestion(vm: VocabVM, speaker: Speaker, mode: QuizMode, q: Quest
                         Text("כתוב באנגלית", style = MaterialTheme.typography.labelLarge, color = Color.White.copy(alpha = 0.85f))
                         Text(w.he, fontSize = 32.sp, fontWeight = FontWeight.ExtraBold, textAlign = TextAlign.Center, color = Color.White)
                     }
+                    QuizMode.TF -> {
+                        Text("האם זה התרגום הנכון?", style = MaterialTheme.typography.labelLarge, color = Color.White.copy(alpha = 0.85f))
+                        Text(w.en, fontSize = 38.sp, fontWeight = FontWeight.ExtraBold, textAlign = TextAlign.Center, color = Color.White)
+                        Text("= ${q.shown.he}", fontSize = 26.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, color = Color.White.copy(alpha = 0.95f))
+                        IconButton(onClick = { speaker.speak(w.en, vm.rate) }) { Icon(Icons.Default.VolumeUp, "השמע", tint = Color.White) }
+                    }
+                    QuizMode.MIX -> {}
                 }
             }
         }
@@ -524,7 +541,22 @@ private fun QuizQuestion(vm: VocabVM, speaker: Speaker, mode: QuizMode, q: Quest
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None, imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = { vm.checkTyped() })
             )
-            if (!vm.answered) Button(onClick = { vm.checkTyped() }, Modifier.fillMaxWidth().height(54.dp), shape = RoundedCornerShape(18.dp)) { Text("בדיקה", fontWeight = FontWeight.Bold) }
+            if (!vm.answered) {
+                if (vm.hint) Text("רמז: ${w.en.first()}${w.en.drop(1).map { if (it == ' ') "  " else " _" }.joinToString("")}  (${w.en.length} תווים)", color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedButton(onClick = { vm.hint = true }, Modifier.height(54.dp), shape = RoundedCornerShape(18.dp), enabled = !vm.hint) { Icon(Icons.Default.Lightbulb, null); Spacer(Modifier.width(6.dp)); Text("רמז") }
+                    Button(onClick = { vm.checkTyped() }, Modifier.weight(1f).height(54.dp), shape = RoundedCornerShape(18.dp)) { Text("בדיקה", fontWeight = FontWeight.Bold) }
+                }
+            }
+        } else if (mode == QuizMode.TF) {
+            val truth = q.shown.en == w.en
+            val picked = vm.pickedEn
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                listOf(true to "נכון ✓", false to "לא נכון ✗").forEach { (v, label) ->
+                    val st = when { !vm.answered -> 0; v == truth -> 1; picked == v.toString() -> 2; else -> 3 }
+                    Box(Modifier.weight(1f)) { OptionButton(label, st) { if (!vm.answered) { haptic.performHapticFeedback(HapticFeedbackType.LongPress); vm.answerTF(v) } } }
+                }
+            }
         } else {
             q.options.forEach { o ->
                 val isAnswer = o.en == w.en

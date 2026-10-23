@@ -83,12 +83,23 @@ class ProgressStore(context: Context) {
     var heFirst: Boolean
         get() = p.getBoolean("heFirst", false)
         set(v) { p.edit().putBoolean("heFirst", v).apply() }
+    var quizLen: Int
+        get() = p.getInt("quizLen", 10)
+        set(v) { p.edit().putInt("quizLen", v).apply() }
+    var skipLearned: Boolean
+        get() = p.getBoolean("skipLearned", false)
+        set(v) { p.edit().putBoolean("skipLearned", v).apply() }
+    var learnLen: Int
+        get() = p.getInt("learnLen", 20)
+        set(v) { p.edit().putInt("learnLen", v).apply() }
 
     fun resetProgress() {
         val keep = mapOf("theme" to themeMode, "goal" to dailyGoal)
         val rate = speechRate; val auto = autoSpeak; val he = heFirst
+        val ql = quizLen; val sk = skipLearned; val ll = learnLen
         p.edit().clear().apply()
         p.edit().putInt("theme", keep["theme"]!!).putInt("goal", keep["goal"]!!).putFloat("rate", rate)
-            .putBoolean("autoSpeak", auto).putBoolean("heFirst", he).apply()
+            .putBoolean("autoSpeak", auto).putBoolean("heFirst", he)
+            .putInt("quizLen", ql).putBoolean("skipLearned", sk).putInt("learnLen", ll).apply()
     }
 }

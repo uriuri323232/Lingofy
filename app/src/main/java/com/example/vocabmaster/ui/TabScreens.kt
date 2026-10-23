@@ -35,9 +35,14 @@ import com.example.vocabmaster.data.WordRepository
 fun SearchScreen(vm: VocabVM, speaker: Speaker) {
     @Suppress("UNUSED_VARIABLE") val tick = vm.tick
     var cat by rememberSaveable { mutableStateOf(WordRepository.ALL) }
+    var lvl by rememberSaveable { mutableIntStateOf(-1) }
     val q = vm.query.trim()
-    val results = remember(q, cat) {
-        vm.repo.words.filter { (cat == WordRepository.ALL || it.category == cat) && (q.isEmpty() || it.en.contains(q, true) || it.he.contains(q)) }
+    val results = remember(q, cat, lvl, vm.tick) {
+        vm.repo.words.filter {
+            (cat == WordRepository.ALL || it.category == cat) &&
+                (lvl < 0 || vm.store.level(it.en) == lvl) &&
+                (q.isEmpty() || it.en.contains(q, true) || it.he.contains(q))
+        }.sortedBy { it.en.lowercase() }
     }
     Column(Modifier.fillMaxSize()) {
         TabHeader("חיפוש")
@@ -52,6 +57,11 @@ fun SearchScreen(vm: VocabVM, speaker: Speaker) {
                 FilterChip(selected = cat == c, onClick = { cat = c }, label = { Text("${WordRepository.emoji(c)} $c") })
             }
         }
+        LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            val names = listOf("כל הרמות", "חדשות", "קשות", "בלמידה", "נלמדו")
+            items(names.size) { i -> FilterChip(selected = lvl == i - 1, onClick = { lvl = i - 1 }, label = { Text(names[i]) }) }
+        }
+        Spacer(Modifier.height(6.dp))
         if (results.isEmpty()) EmptyState("לא נמצאו מילים", "נסה חיפוש אחר או קטגוריה אחרת", Icons.Default.Search)
         else LazyColumn(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             item(key = "count") { Text("${results.size} מילים", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall) }
@@ -222,8 +232,20 @@ fun SettingsScreen(vm: VocabVM) {
                 ChipRow(listOf("לפי המערכת", "בהיר", "כהה"), vm.themeMode) { vm.setTheme(it) }
             }
             SettingsCard("יעד יומי (תרגולים)") {
-                val goals = listOf(10, 20, 30, 50)
+                val goals = listOf(10, 20, 30, 50, 100)
                 ChipRow(goals.map { "$it" }, goals.indexOf(vm.goal)) { vm.updateGoal(goals[it]) }
+            }
+            SettingsCard("אורך סבב") {
+                val ll = listOf(10, 20, 30, 50)
+                Text("כרטיסיות בכל סבב לימוד", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+                ChipRow(ll.map { "$it" }, ll.indexOf(vm.learnLen)) { vm.updateLearnLen(ll[it]) }
+                val ql = listOf(10, 20, 30)
+                Text("שאלות בכל חידון", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+                ChipRow(ql.map { "$it" }, ql.indexOf(vm.quizLen)) { vm.updateQuizLen(ql[it]) }
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text("דלג על מילים שכבר נלמדו", Modifier.weight(1f))
+                    Switch(checked = vm.skipLearned, onCheckedChange = { vm.updateSkipLearned(it) })
+                }
             }
             SettingsCard("קול") {
                 val rates = listOf(0.7f, 0.9f, 1.1f)
@@ -243,7 +265,7 @@ fun SettingsScreen(vm: VocabVM) {
                 }
                 Text("הכול נשמר רק במכשיר ועובד בלי אינטרנט.", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
             }
-            Text("Lingofy · גרסה 2.1", Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+            Text("Lingofy · גרסה 2.3", Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
         }
     }
     if (confirm) AlertDialog(
