@@ -41,14 +41,14 @@ fun SearchScreen(vm: VocabVM, speaker: Speaker) {
         vm.repo.words.filter {
             (cat == WordRepository.ALL || it.category == cat) &&
                 (lvl < 0 || vm.store.level(it.en) == lvl) &&
-                (q.isEmpty() || it.en.contains(q, true) || it.he.contains(q))
-        }.sortedBy { it.en.lowercase() }
+                (q.isEmpty() || it.en.contains(q, true) || it.he.contains(q) || it.he.replace("־", " ").replace("״", "\"").contains(q.replace("־", " ")))
+        }.sortedWith(compareBy({ if (q.isNotEmpty() && it.en.startsWith(q, true)) 0 else 1 }, { it.en.lowercase() }))
     }
     Column(Modifier.fillMaxSize()) {
         TabHeader("חיפוש")
         OutlinedTextField(
             value = vm.query, onValueChange = { vm.query = it }, modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-            placeholder = { Text("חפש באנגלית או בעברית") }, singleLine = true, shape = RoundedCornerShape(16.dp),
+            placeholder = { Text("חפש מתוך ${vm.repo.words.size} מילים") }, singleLine = true, shape = RoundedCornerShape(16.dp),
             leadingIcon = { Icon(Icons.Default.Search, null) },
             trailingIcon = { if (vm.query.isNotEmpty()) IconButton(onClick = { vm.query = "" }) { Icon(Icons.Default.Close, "נקה") } }
         )

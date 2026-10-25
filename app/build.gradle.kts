@@ -5,7 +5,7 @@ plugins {
 }
 
 android { namespace = "com.example.vocabmaster"; compileSdk = 35
-    defaultConfig { applicationId = "com.example.vocabmaster"; minSdk = 26; targetSdk = 35; versionCode = 5; versionName = "2.3.0"; resourceConfigurations += listOf("he", "en") }
+    defaultConfig { applicationId = "com.example.vocabmaster"; minSdk = 26; targetSdk = 35; versionCode = 6; versionName = "2.4.0"; resourceConfigurations += listOf("he", "en") }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

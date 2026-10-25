@@ -66,5 +66,7 @@ fun catGradient(c: String): List<Color> = when (c) {
     "לימודים" -> listOf(Color(0xFF6366F1), Color(0xFF14B8A6))
     "בעלי חיים" -> listOf(Color(0xFF84CC16), Color(0xFF16A34A))
     "רגשות" -> listOf(Color(0xFFF472B6), Color(0xFFFB923C))
+    "מדע" -> listOf(Color(0xFF06B6D4), Color(0xFF3B82F6))
+    "חברה" -> listOf(Color(0xFF78716C), Color(0xFF44403C))
     else -> listOf(Color(0xFF4F46E5), Color(0xFF7C3AED))
 }

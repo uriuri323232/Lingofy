@@ -88,7 +88,8 @@ fun WordRow(w: Word, vm: VocabVM, speaker: Speaker) {
                     Text(w.en, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                     Spacer(Modifier.width(8.dp)); LevelDot(vm.store.level(w.en))
                 }
-                Text(w.he, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(w.he, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2)
+                Text(w.category, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f))
             }
             IconButton(onClick = { speaker.speak(w.en, vm.rate) }) { Icon(Icons.Default.VolumeUp, "השמע", tint = MaterialTheme.colorScheme.primary) }
             IconButton(onClick = { vm.toggleFav(w) }) {
